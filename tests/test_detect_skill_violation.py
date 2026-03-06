@@ -42,6 +42,7 @@ class TestConstants:
     def test_valid_extensions_contains_expected(self) -> None:
         """VALID_EXTENSIONS contains expected file types."""
         assert ".md" in VALID_EXTENSIONS
+        assert ".py" in VALID_EXTENSIONS
         assert ".ps1" in VALID_EXTENSIONS
         assert ".psm1" in VALID_EXTENSIONS
 
@@ -131,7 +132,8 @@ class TestGetAllFiles:
         (tmp_path / "file.md").write_text("# Markdown")
         (tmp_path / "script.ps1").write_text("Write-Host 'Hello'")
         (tmp_path / "module.psm1").write_text("function Test {}")
-        (tmp_path / "code.py").write_text("print('hello')")  # Should be excluded
+        (tmp_path / "code.py").write_text("print('hello')")
+        (tmp_path / "ignored.txt").write_text("text file")  # Should be excluded
 
         # Create subdirectory
         sub_dir = tmp_path / "sub"
@@ -149,10 +151,11 @@ class TestGetAllFiles:
         """Finds files with valid extensions."""
         result = get_all_files(test_repo)
 
-        assert len(result) == 4  # file.md, script.ps1, module.psm1, sub/nested.md
+        assert len(result) == 5  # file.md, script.ps1, module.psm1, code.py, sub/nested.md
         assert "file.md" in result
         assert "script.ps1" in result
         assert "module.psm1" in result
+        assert "code.py" in result
         assert "sub/nested.md" in result
 
     def test_excludes_git_directory(self, test_repo: Path) -> None:
@@ -165,7 +168,7 @@ class TestGetAllFiles:
         """Excludes files with non-matching extensions."""
         result = get_all_files(test_repo)
 
-        assert not any(f.endswith(".py") for f in result)
+        assert not any(f.endswith(".txt") for f in result)
 
 
 class TestCheckFileForViolations:
@@ -332,7 +335,7 @@ class TestMainFunction:
         # Create skills directory
         skills_dir = tmp_path / ".claude" / "skills" / "github" / "scripts" / "pr"
         skills_dir.mkdir(parents=True)
-        (skills_dir / "Get-PRContext.ps1").touch()
+        (skills_dir / "get_pr_context.py").touch()
 
         # Create test files
         (tmp_path / "clean.md").write_text("# Clean file")
